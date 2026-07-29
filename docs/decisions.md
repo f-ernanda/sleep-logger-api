@@ -34,6 +34,40 @@ worth revisiting.
 
 ---
 
+## 2026-07-29 — Direct commits to main instead of a PR-based workflow
+
+**Context:** The assignment brief ([README.md](../README.md)) asks for changes to be "merged in
+as PRs to the repository." This project is also adopting trunk-based development to keep the
+solo take-home workflow lightweight.
+
+**Decision:** Work directly on `main` with small, atomic, [conventional
+commits](https://www.conventionalcommits.org/) instead of opening a PR per change. No feature
+branches, no long-lived branches.
+
+**Consequences:** This deviates from the README's literal instruction — worth calling out to a
+reviewer rather than leaving it to look like an oversight. Since there's no PR description to
+carry rationale, commit messages have to do that job (see `CLAUDE.md` conventions). Since there's
+no PR review gate, each commit needs to leave `main` in a buildable, passing-tests state on its
+own — review happens before committing, not after.
+
+---
+
+## 2026-07-29 — Local pre-commit hook as the build/test gate
+
+**Context:** With no PR review under the direct-commits-to-main workflow (see the decision
+above), nothing currently stops a broken commit from landing on `main`.
+
+**Decision:** Added a git `pre-commit` hook (`.githooks/pre-commit`, wired up via
+`git config core.hooksPath .githooks` since `.git/hooks` isn't tracked). It runs
+`docker compose build sleep_api` — which runs `./gradlew build`, i.e. compiles and runs unit
+tests — but only when the staged changes touch `sleep/`, so docs-only commits stay fast.
+
+**Consequences:** This is the enforcement mechanism for "every commit leaves `main` buildable and
+passing." It only runs locally, via a git config that isn't itself versioned — re-run
+`git config core.hooksPath .githooks` after a fresh clone.
+
+---
+
 ## Open decisions carried over from other docs
 
 These are flagged in `requirements.md` / `data-model.md` / `api.md` and still need an entry here

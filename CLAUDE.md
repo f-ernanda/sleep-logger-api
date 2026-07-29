@@ -41,4 +41,10 @@ Use `/spec-check` to check the current implementation against the docs above.
 - Package root: `com.noom.interview.fullstack.sleep`
 - Migrations: `Vx.y__description.sql` under `sleep/src/main/resources/db/migration`, continuing
   from the existing `V1.0__test_db_reachable.sql`
-- Keep commits and PRs scoped to one concern at a time (per the assignment's own instructions)
+- Trunk-based: commit directly to `main` in small, atomic, conventional commits — no feature
+  branches or PRs (deviates from the assignment's README; see `docs/decisions.md`). Each commit
+  should leave `main` buildable and passing tests, since there's no PR gate to catch it after
+  the fact.
+- A `pre-commit` hook (`.githooks/pre-commit`) enforces that: it builds + tests `sleep_api` when
+  staged changes touch `sleep/`. Wired up via `git config core.hooksPath .githooks` — re-run that
+  if cloning fresh.

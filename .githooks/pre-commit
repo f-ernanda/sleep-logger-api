@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if git diff --cached --name-only | grep -q '^sleep/'; then
+  echo "pre-commit: sleep/ changed — building image (compiles + runs tests)..."
+  docker compose build sleep_api
+else
+  echo "pre-commit: no changes under sleep/, skipping build/test."
+fi
