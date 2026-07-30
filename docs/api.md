@@ -3,10 +3,9 @@
 Draft — refine as decisions in `decisions.md` are made, and keep this in sync with the actual
 controllers (`/spec-check` checks for drift).
 
-All endpoints are user-scoped; how `userId` is supplied (header, query param, or request body
-field) is an open decision — see below.
+All endpoints are scoped by a `userId` path parameter (see `decisions.md`).
 
-## `POST /sleep-logs`
+## `POST /users/{userId}/sleep-logs`
 
 Create the sleep log for last night. (FR1)
 
@@ -14,7 +13,6 @@ Request:
 
 ```json
 {
-  "userId": 1,
   "logDate": "2026-07-28",
   "timeInBedStart": "2026-07-27T23:15:00Z",
   "timeInBedEnd": "2026-07-28T07:00:00Z",
@@ -36,16 +34,15 @@ Response `201 Created`:
 }
 ```
 
-## `GET /sleep-logs/latest`
+## `GET /users/{userId}/sleep-logs/latest`
 
 Fetch the most recent sleep log for a user. (FR2)
 
 Response `200 OK` — same shape as the create response.
 
-Open: response when the user has no logs yet — `404` vs `200` with an empty/null body. Pick one
-and record it in `decisions.md`.
+Response `404 Not Found` — the user has no sleep logs yet.
 
-## `GET /sleep-logs/averages`
+## `GET /users/{userId}/sleep-logs/averages`
 
 Last 30-day averages for a user. (FR3)
 
@@ -68,12 +65,5 @@ Response `200 OK`:
 
 ## Errors
 
-Open decision: adopt a consistent error shape (e.g. `{"error": "message"}` with a matching HTTP
-status) rather than leaking Spring Boot's default error body. Record the chosen shape in
-`decisions.md` once picked, and list it here.
-
-## Open Decisions Referenced Above
-
-- How `userId` is supplied on each request
-- 404 vs empty-200 for "no logs yet"
-- Error response shape
+Errors use a consistent shape — `{"error": "<message>"}` with a matching HTTP status — via a
+single `@ControllerAdvice`, not Spring Boot's default error body.

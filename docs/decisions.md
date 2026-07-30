@@ -68,16 +68,102 @@ passing." It only runs locally, via a git config that isn't itself versioned —
 
 ---
 
-## Open decisions carried over from other docs
+## 2026-07-29 — `userId` passed as a path parameter
 
-These are flagged in `requirements.md` / `data-model.md` / `api.md` and still need an entry here
-before (or as) they're implemented:
+**Context:** All three endpoints are user-scoped with no auth. A header, query param, or body
+field would all work for `POST`, but `GET` requests don't have a body, so a body field would mean
+two different mechanisms depending on the verb.
 
-- How `userId` is supplied on requests (header / query param / body field)
-- Total time in bed: stored column vs. computed on read
-- Feeling storage: `VARCHAR` + `CHECK` vs. native Postgres `ENUM`
-- `log_date` semantics when the sleep interval spans midnight
-- Response for "no log yet" on `GET /sleep-logs/latest` (404 vs empty 200)
-- Error response shape
-- Repository test strategy: mock `JdbcTemplate` vs. a real Postgres integration test
-  (e.g. Testcontainers)
+**Decision:** `userId` is a path parameter on every endpoint: `/users/{userId}/sleep-logs`,
+`/users/{userId}/sleep-logs/latest`, `/users/{userId}/sleep-logs/averages`.
+
+**Consequences:** Uniform across `GET`/`POST`, visible and curl-able without custom headers.
+Every route now carries `{userId}`, which is fine at this scale; a future real-auth setup would
+replace the path segment with a token-derived identity rather than trusting a client-supplied one.
+
+---
+
+## 2026-07-29 — Total time in bed is always derived, never stored
+
+**Context:** Storing a `total_time_in_bed_minutes` column (as originally drafted in
+`data-model.md`) creates a second source of truth that could drift from `time_in_bed_start` /
+`time_in_bed_end`.
+
+**Decision:** No stored column. Total time in bed is computed from the interval wherever it's
+needed — the single-log response and the FR3 averages query.
+
+**Consequences:** One source of truth, no drift risk, at the cost of computing it on every read
+instead of reading a column — negligible at this data volume.
+
+---
+
+## 2026-07-30 — Feeling stored as `VARCHAR` + `CHECK`, not a native Postgres `ENUM`
+
+**Context:** Persistence is plain JDBC (`NamedParameterJdbcTemplate`), not JPA — there's no ORM
+layer to abstract a native enum's mapping.
+
+**Decision:** `feeling VARCHAR(4) CHECK (feeling IN ('BAD', 'OK', 'GOOD'))`.
+
+**Consequences:** No casting (`::feeling_enum`) needed in queries. Slightly less storage-efficient
+and less self-documenting via `psql \dT` than a native enum, which isn't a real cost here.
+
+---
+
+## 2026-07-30 — `logDate` is an independent field, not derived from the interval
+
+**Context:** The sleep interval can span midnight, so "the date of the sleep" doesn't map cleanly
+to either the start or end timestamp.
+
+**Decision:** `logDate` is supplied by the client (or defaults to the server's current date),
+representing "what day this entry is for." It is not validated or derived from
+`timeInBedStart`/`timeInBedEnd`.
+
+**Consequences:** Matches the requirement's own wording ("the date of the sleep (today)").
+Nothing stops a client from sending a `logDate` inconsistent with the interval — accepted, since
+validating that isn't asked for and adds complexity for a case out of scope.
+
+---
+
+## 2026-07-30 — `404` for "no sleep log yet" on the latest-log endpoint
+
+**Context:** `GET /users/{userId}/sleep-logs/latest` needs defined behavior for a user with no
+logs yet.
+
+**Decision:** Return `404 Not Found`, not `200` with an empty/null body.
+
+**Consequences:** "Latest sleep log" is a singular resource; its absence is a Not Found, not a
+Found-but-empty. Clients need a status check rather than a truthy check on a field — the more
+idiomatic and testable choice.
+
+---
+
+## 2026-07-30 — Consistent JSON error shape via a single exception handler
+
+**Context:** Spring Boot's default error body is verbose and inconsistent with a clean REST
+contract.
+
+**Decision:** A single `@ControllerAdvice` maps domain exceptions to `{"error": "<message>"}`
+with a matching HTTP status, replacing the default error body everywhere.
+
+**Consequences:** One extra class, but every error response is predictable and easy to assert on
+in tests — no per-endpoint error handling needed.
+
+---
+
+## 2026-07-30 — Repository tests use Testcontainers, not mocks
+
+**Context:** The assignment asks for "unit tests for the repository." Mocking
+`NamedParameterJdbcTemplate` only proves the mock was called correctly, not that the SQL itself is
+correct — which is the actual risk in a repository (typos in column names, wrong types, off-by-one
+errors in the 30-day range query).
+
+**Decision:** Repository tests run against a real, ephemeral Postgres container via Testcontainers
+rather than mocking the JDBC template.
+
+**Consequences:** Higher confidence, slower tests (a container boot per test class). More
+importantly: the `Dockerfile`'s `RUN ./gradlew build` step builds the image with no Docker socket
+access, so it can't run these tests. Test execution needs to move out of that step into a separate
+one with the socket mounted (e.g. `docker compose run` with
+`/var/run/docker.sock:/var/run/docker.sock`) — to be wired up once the repository layer exists.
+Until then, `CLAUDE.md`'s "tests run as part of the image build" claim and the pre-commit hook
+both describe the current state, not the target one, and will need updating at that point.

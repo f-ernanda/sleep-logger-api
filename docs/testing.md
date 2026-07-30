@@ -12,11 +12,12 @@
 - **Business/service logic** (e.g. average calculation, total-time-in-bed derivation): plain
   JUnit 5 + AssertJ, no Spring context — these are pure functions over data, so they don't need
   Spring at all.
-- **Repository layer**: open decision (see `decisions.md`) between two approaches —
-  1. Mock `NamedParameterJdbcTemplate` with Mockito and assert the SQL/params passed, or
-  2. Run the real queries against Postgres (e.g. via Testcontainers) for higher confidence at the
-     cost of slower tests.
-     Whichever is chosen, record it in `decisions.md` and update this section.
+- **Repository layer**: Testcontainers, not mocks — tests run the real queries against an
+  ephemeral Postgres container, since the repository's whole job is translating to/from SQL
+  correctly (see `decisions.md`). This means the `Dockerfile`'s `RUN ./gradlew build` step can't
+  run these tests (no Docker socket access during an image build) — test execution needs to move
+  to a separate step once the repository layer exists. Until that's wired up, "Running tests"
+  below describes the current build, not the target one.
 - **Controllers**: not planned as a separate test layer unless a specific routing/serialization
   concern needs it — the Postman collection below covers the HTTP contract end-to-end.
 
