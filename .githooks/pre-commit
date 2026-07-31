@@ -2,8 +2,10 @@
 set -euo pipefail
 
 if git diff --cached --name-only | grep -q '^sleep/'; then
-  echo "pre-commit: sleep/ changed — building image (compiles + runs tests)..."
+  echo "pre-commit: sleep/ changed — building image..."
   docker compose build sleep_api
+  echo "pre-commit: running tests (Testcontainers needs the Docker socket)..."
+  docker compose run --rm -v /var/run/docker.sock:/var/run/docker.sock sleep_api ./gradlew test
 else
   echo "pre-commit: no changes under sleep/, skipping build/test."
 fi

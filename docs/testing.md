@@ -14,17 +14,17 @@
   Spring at all.
 - **Repository layer**: Testcontainers, not mocks — tests run the real queries against an
   ephemeral Postgres container, since the repository's whole job is translating to/from SQL
-  correctly (see `decisions.md`). This means the `Dockerfile`'s `RUN ./gradlew build` step can't
-  run these tests (no Docker socket access during an image build) — test execution needs to move
-  to a separate step once the repository layer exists. Until that's wired up, "Running tests"
-  below describes the current build, not the target one.
+  correctly (see `decisions.md`). `SleepLogRepositoryTest` is the first of these.
 - **Controllers**: not planned as a separate test layer unless a specific routing/serialization
   concern needs it — the Postman collection below covers the HTTP contract end-to-end.
 
 ## Running tests
 
-- Full build (includes tests, matches what the Dockerfile does): `docker compose up --build`
-- Tests only, without rebuilding the run image: `docker compose run --rm sleep_api ./gradlew test`
+- `docker compose up --build` compiles and packages, but does **not** run tests — the
+  `Dockerfile` builds with `./gradlew build -x test`, since Testcontainers needs Docker socket
+  access that isn't available during an image build.
+- Run tests explicitly, with the socket mounted so Testcontainers can start its own Postgres:
+  `docker compose run --rm -v /var/run/docker.sock:/var/run/docker.sock sleep_api ./gradlew test`
 
 ## Manual / API-level testing
 

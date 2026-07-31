@@ -16,8 +16,10 @@ PostgreSQL + Flyway), no auth but user-aware. Full assignment brief: [README.md]
   (API on `localhost:8080`, Postgres on `localhost:5432`)
 - `docker compose up --build -d` then `docker compose logs -f sleep_api` — same, detached + follow
 - `docker compose down` — stop and remove containers
-- Tests run as part of the image build (`./gradlew build` in the Dockerfile). To run tests only:
-  `docker compose run --rm sleep_api ./gradlew test`
+- Tests do **not** run during `docker compose up --build` (the Dockerfile runs
+  `./gradlew build -x test`, since Testcontainers-based tests need Docker socket access that
+  isn't available during an image build). Run them explicitly:
+  `docker compose run --rm -v /var/run/docker.sock:/var/run/docker.sock sleep_api ./gradlew test`
 - Live-reload (`bootRun --continuous` + devtools) was evaluated and dropped — not worth the
   complexity for this project's size. Rebuild-on-change (`docker compose up --build`) is the
   workflow.
@@ -45,6 +47,6 @@ Use `/spec-check` to check the current implementation against the docs above.
   branches or PRs (deviates from the assignment's README; see `docs/decisions.md`). Each commit
   should leave `main` buildable and passing tests, since there's no PR gate to catch it after
   the fact.
-- A `pre-commit` hook (`.githooks/pre-commit`) enforces that: it builds + tests `sleep_api` when
-  staged changes touch `sleep/`. Wired up via `git config core.hooksPath .githooks` — re-run that
-  if cloning fresh.
+- A `pre-commit` hook (`.githooks/pre-commit`) enforces that: it builds `sleep_api` and runs its
+  tests (socket-mounted, per above) when staged changes touch `sleep/`. Wired up via
+  `git config core.hooksPath .githooks` — re-run that if cloning fresh.
