@@ -24,7 +24,9 @@
   `Dockerfile` builds with `./gradlew build -x test`, since Testcontainers needs Docker socket
   access that isn't available during an image build.
 - Run tests explicitly, with the socket mounted so Testcontainers can start its own Postgres:
-  `docker compose run --rm -v /var/run/docker.sock:/var/run/docker.sock sleep_api ./gradlew test`
+  `docker compose run --rm -T -v /var/run/docker.sock:/var/run/docker.sock sleep_api ./gradlew test`
+  (`-T` disables pseudo-TTY allocation, needed when running non-interactively, e.g. from the
+  pre-commit hook)
 
 ## Manual / API-level testing
 

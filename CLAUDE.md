@@ -19,7 +19,9 @@ PostgreSQL + Flyway), no auth but user-aware. Full assignment brief: [README.md]
 - Tests do **not** run during `docker compose up --build` (the Dockerfile runs
   `./gradlew build -x test`, since Testcontainers-based tests need Docker socket access that
   isn't available during an image build). Run them explicitly:
-  `docker compose run --rm -v /var/run/docker.sock:/var/run/docker.sock sleep_api ./gradlew test`
+  `docker compose run --rm -T -v /var/run/docker.sock:/var/run/docker.sock sleep_api ./gradlew test`
+  (`-T` disables pseudo-TTY allocation — needed when this runs non-interactively, e.g. from a
+  git hook)
 - Live-reload (`bootRun --continuous` + devtools) was evaluated and dropped — not worth the
   complexity for this project's size. Rebuild-on-change (`docker compose up --build`) is the
   workflow.
