@@ -184,3 +184,23 @@ in this range" is a valid (if empty) answer to that report, not a missing resour
 `averageTotalTimeInBedMinutes` defaults to `0.0` (a sensible empty-duration value) while
 `averageBedTime`/`averageWakeTime` default to `null` instead of `00:00` (a clock time doesn't have
 a sensible zero value that isn't misleading).
+
+---
+
+## 2026-07-31 — Controllers return domain objects directly, no Response DTOs
+
+**Context:** `SleepLog` and `SleepAverages` already match the documented API response shape
+field-for-field — a separate `SleepLogResponse`/`SleepAveragesResponse` DTO layer would just
+duplicate the same fields with a mapping function in between. `CreateSleepLogRequest` is kept as
+its own type, since the request genuinely has a different shape (no `id`, no `userId` — that
+comes from the path).
+
+**Decision:** `SleepLogController` returns `SleepLog`/`SleepAverages` directly from
+`GET`/`POST` responses instead of mapping to dedicated Response DTOs.
+
+**Consequences:** Less code, no mapping boilerplate for an assignment this size. The real cost
+showed up immediately: `SleepLog.createdAt` — a field `api.md` never specified — started
+appearing in every response simply because it exists on the domain type. Resolved by updating
+`api.md` to document it rather than suppressing it with `@JsonIgnore`, since it's harmless,
+useful metadata. This is the general risk of skipping a DTO buffer: any future field added to the
+domain model for internal reasons is exposed over the API by default unless deliberately hidden.

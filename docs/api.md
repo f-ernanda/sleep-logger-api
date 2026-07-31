@@ -29,8 +29,9 @@ Response `201 Created`:
   "logDate": "2026-07-28",
   "timeInBedStart": "2026-07-27T23:15:00Z",
   "timeInBedEnd": "2026-07-28T07:00:00Z",
-  "totalTimeInBedMinutes": 465,
-  "feeling": "GOOD"
+  "feeling": "GOOD",
+  "createdAt": "2026-07-28T07:05:00Z",
+  "totalTimeInBedMinutes": 465
 }
 ```
 
