@@ -167,3 +167,20 @@ one with the socket mounted (e.g. `docker compose run` with
 `/var/run/docker.sock:/var/run/docker.sock`) — to be wired up once the repository layer exists.
 Until then, `CLAUDE.md`'s "tests run as part of the image build" claim and the pre-commit hook
 both describe the current state, not the target one, and will need updating at that point.
+
+---
+
+## 2026-07-30 — Averages with zero logs in range return `200` with zeroed values, not `404`
+
+**Context:** `GET /users/{userId}/sleep-logs/averages` needs defined behavior when a user has no
+sleep logs in the last 30 days — unlike the single-log `latest` endpoint (see the `404` decision
+above), which is a different kind of endpoint.
+
+**Decision:** Return `200 OK` with `averageTotalTimeInBedMinutes: 0.0`, `averageBedTime`/
+`averageWakeTime: null`, and `feelingFrequency` at `0` for every value — not `404`.
+
+**Consequences:** Averages is a report over a range, not a lookup of a single resource; "no data
+in this range" is a valid (if empty) answer to that report, not a missing resource. This is why
+`averageTotalTimeInBedMinutes` defaults to `0.0` (a sensible empty-duration value) while
+`averageBedTime`/`averageWakeTime` default to `null` instead of `00:00` (a clock time doesn't have
+a sensible zero value that isn't misleading).

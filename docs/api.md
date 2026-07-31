@@ -63,6 +63,10 @@ Response `200 OK`:
 }
 ```
 
+With no logs in the last 30 days, this still returns `200 OK` with `averageTotalTimeInBedMinutes`
+at `0.0`, `averageBedTime`/`averageWakeTime` as `null`, and every `feelingFrequency` value at `0`
+— see `decisions.md`.
+
 ## Errors
 
 Errors use a consistent shape — `{"error": "<message>"}` with a matching HTTP status — via a
