@@ -44,11 +44,12 @@ translations of it, and `/spec-check` compares the implementation against it.
 
 ## Deliverables Checklist
 
-- [ ] Flyway migration(s) creating the sleep log table
-- [ ] REST endpoints covering FR1–FR3
-- [ ] Unit tests for the repository layer and any business/service logic
-- [ ] A Postman collection or script exercising the API
-- [ ] Work delivered as reviewable PRs with a meaningful commit history
+- [x] Flyway migration(s) creating the sleep log table
+- [x] REST endpoints covering FR1–FR3
+- [x] Unit tests for the repository layer and any business/service logic
+- [x] A Postman collection or script exercising the API (`scripts/smoke-test.sh`)
+- [ ] Work delivered as reviewable PRs with a meaningful commit history — deviated from
+  intentionally, see `decisions.md`
 
 ## Out of Scope
 

@@ -204,3 +204,19 @@ appearing in every response simply because it exists on the domain type. Resolve
 `api.md` to document it rather than suppressing it with `@JsonIgnore`, since it's harmless,
 useful metadata. This is the general risk of skipping a DTO buffer: any future field added to the
 domain model for internal reasons is exposed over the API by default unless deliberately hidden.
+
+---
+
+## 2026-08-03 — A curl-based smoke-test script instead of a Postman collection
+
+**Context:** The assignment accepts either "a simple script or Postman collection." All manual
+verification throughout this project has already been plain `curl` calls, requiring no additional
+software to install or open to review.
+
+**Decision:** `scripts/smoke-test.sh` — a bash script using `curl` and `jq` — exercises FR1–FR3
+end-to-end against a running `docker compose up` stack, rather than a Postman collection.
+
+**Consequences:** Reviewable as plain text in a diff, no Postman installation needed to check it.
+Adds a `jq` dependency for whoever runs it (checked for explicitly at the top of the script, with
+a clear error if missing). Uses a timestamp-derived `userId` per run so it's safe to re-run
+without manual cleanup, at the cost of not testing against a fixed, inspectable fixture user.
