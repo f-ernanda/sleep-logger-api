@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
-import java.sql.Connection
 import javax.sql.DataSource
 
 
@@ -32,10 +31,6 @@ class DatabaseConfiguration {
         dataSourceBuilder.password(password)
         return dataSourceBuilder.build()
     }
-
-    @Bean
-    fun dbConnection(dataSource: DataSource) : Connection
-        = dataSource.connection
 
     @Bean
     fun namedParameterJdbcTemplate(dataSource: DataSource) : NamedParameterJdbcTemplate {
