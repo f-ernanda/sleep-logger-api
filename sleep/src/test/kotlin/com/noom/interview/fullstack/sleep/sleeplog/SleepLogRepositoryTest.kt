@@ -31,21 +31,27 @@ class SleepLogRepositoryTest {
 
     @Test
     fun `create persists a sleep log and returns the generated id and createdAt`() {
-        val created = repository.create(
-            newSleepLog(userId = 1, logDate = LocalDate.of(2026, 7, 28), feeling = Feeling.GOOD)
-        )
+        val toCreate = newSleepLog(userId = 1, logDate = LocalDate.of(2026, 7, 28), feeling = Feeling.GOOD)
+
+        val created = repository.create(toCreate)
 
         assertThat(created.id).isPositive
         assertThat(created.createdAt).isNotNull
         assertThat(created.userId).isEqualTo(1L)
         assertThat(created.logDate).isEqualTo(LocalDate.of(2026, 7, 28))
         assertThat(created.feeling).isEqualTo(Feeling.GOOD)
+        // Round-tripping through TIMESTAMPTZ is the trickiest part of this method — assert it
+        // explicitly rather than trusting Timestamp.from()/toInstant() silently.
+        assertThat(created.timeInBedStart).isEqualTo(toCreate.timeInBedStart)
+        assertThat(created.timeInBedEnd).isEqualTo(toCreate.timeInBedEnd)
     }
 
     @Test
     fun `findLatestByUserId returns the most recent log for that user only`() {
-        repository.create(newSleepLog(userId = 1, logDate = LocalDate.of(2026, 7, 20)))
+        // Inserted in reverse logDate order on purpose: this log has the later logDate but the
+        // lower id, so the test only passes if ordering is truly driven by logDate, not id.
         val expected = repository.create(newSleepLog(userId = 1, logDate = LocalDate.of(2026, 7, 28)))
+        repository.create(newSleepLog(userId = 1, logDate = LocalDate.of(2026, 7, 20)))
         repository.create(newSleepLog(userId = 2, logDate = LocalDate.of(2026, 7, 29)))
 
         val latest = repository.findLatestByUserId(1)
@@ -59,14 +65,21 @@ class SleepLogRepositoryTest {
     }
 
     @Test
-    fun `findByUserIdBetween returns only logs for that user within the date range`() {
+    fun `findByUserIdBetween returns only logs for that user within the date range, inclusive of both boundaries`() {
+        val from = LocalDate.of(2026, 6, 28)
+        val to = LocalDate.of(2026, 7, 28)
+
+        val onStartBoundary = repository.create(newSleepLog(userId = 1, logDate = from))
+        val onEndBoundary = repository.create(newSleepLog(userId = 1, logDate = to))
         val inRange = repository.create(newSleepLog(userId = 1, logDate = LocalDate.of(2026, 7, 15)))
-        repository.create(newSleepLog(userId = 1, logDate = LocalDate.of(2026, 6, 1)))
-        repository.create(newSleepLog(userId = 2, logDate = LocalDate.of(2026, 7, 15)))
+        repository.create(newSleepLog(userId = 1, logDate = from.minusDays(1))) // just before the range
+        repository.create(newSleepLog(userId = 1, logDate = to.plusDays(1))) // just after the range
+        repository.create(newSleepLog(userId = 2, logDate = LocalDate.of(2026, 7, 15))) // other user
 
-        val results = repository.findByUserIdBetween(1, LocalDate.of(2026, 6, 28), LocalDate.of(2026, 7, 28))
+        val results = repository.findByUserIdBetween(1, from, to)
 
-        assertThat(results).extracting("id").containsExactly(inRange.id)
+        assertThat(results).extracting("id")
+            .containsExactlyInAnyOrder(onStartBoundary.id, onEndBoundary.id, inRange.id)
     }
 
     private fun newSleepLog(userId: Long, logDate: LocalDate, feeling: Feeling = Feeling.OK) = NewSleepLog(
