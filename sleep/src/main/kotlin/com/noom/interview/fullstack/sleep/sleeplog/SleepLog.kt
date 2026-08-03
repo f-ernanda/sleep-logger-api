@@ -25,4 +25,8 @@ data class NewSleepLog(
     val timeInBedStart: Instant,
     val timeInBedEnd: Instant,
     val feeling: Feeling
-)
+) {
+    init {
+        require(timeInBedEnd.isAfter(timeInBedStart)) { "timeInBedEnd must be after timeInBedStart" }
+    }
+}
