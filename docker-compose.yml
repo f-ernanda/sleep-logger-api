@@ -23,13 +23,11 @@ services:
 
   sleep_api:
     build: ./sleep/.
-    volumes:
-      - ./sleep/:/sleep/
     ports:
       - "8080:8080"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres_db:5432/postgres
-      - SPRING_DATASOURCE_USER=user
+      - SPRING_DATASOURCE_USERNAME=user
       - SPRING_DATASOURCE_PASSWORD=password
     depends_on:
       db:
