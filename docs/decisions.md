@@ -220,3 +220,42 @@ end-to-end against a running `docker compose up` stack, rather than a Postman co
 Adds a `jq` dependency for whoever runs it (checked for explicitly at the top of the script, with
 a clear error if missing). Uses a timestamp-derived `userId` per run so it's safe to re-run
 without manual cleanup, at the cost of not testing against a fixed, inspectable fixture user.
+
+---
+
+## 2026-08-03 — Reject sleep logs where `timeInBedEnd` isn't after `timeInBedStart`
+
+**Context:** A full review pass found that nothing stopped a client from submitting a reversed
+or zero-length interval, which would silently persist a negative or zero `totalTimeInBedMinutes`.
+Unlike the `logDate`-vs-interval inconsistency (already an accepted, documented gap), this one
+had never been discussed and produces a nonsensical value, not just an unvalidated one.
+
+**Decision:** `NewSleepLog`'s `init` block rejects the interval (via `require`) unless
+`timeInBedEnd` is strictly after `timeInBedStart`; `RestExceptionHandler` maps
+`IllegalArgumentException` to `400`.
+
+**Consequences:** The check lives on `NewSleepLog` itself (not just the controller/DTO), so the
+invariant holds regardless of entry point. Equal start/end is rejected too — a zero-length sleep
+isn't meaningful.
+
+---
+
+## 2026-08-03 — Closed two gaps in the consistent-error-shape guarantee
+
+**Context:** The same review pass found the original `@ControllerAdvice` (see the "Consistent
+JSON error shape" decision above) didn't actually cover everything it implied: an unsupported
+HTTP verb on a valid path was falling through to the generic `Exception` handler as `500` instead
+of `405`, and a completely unmapped route bypassed the advice entirely, returning Spring Boot's
+default whitebox error body instead of `{"error": "..."}`. Both confirmed by hitting them
+directly before and after the fix.
+
+**Decision:** Added a specific handler for `HttpRequestMethodNotSupportedException` → `405`, and
+set `spring.mvc.throw-exception-if-no-handler-found=true` plus
+`spring.web.resources.add-mappings=false` so unmapped routes actually throw
+`NoHandlerFoundException` (handled → `404`) instead of being silently answered by the static
+resource handler first.
+
+**Consequences:** Both properties are required together — `throw-exception-if-no-handler-found`
+alone has no effect while the default static-resource mapping is still active, since that handler
+answers unmapped paths before `DispatcherServlet` ever gets a chance to throw. No functional loss
+from disabling static resource mapping, since this is a pure JSON API with no static content.

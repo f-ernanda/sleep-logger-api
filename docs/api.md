@@ -35,6 +35,8 @@ Response `201 Created`:
 }
 ```
 
+`timeInBedEnd` must be strictly after `timeInBedStart`, or this returns `400`.
+
 ## `GET /users/{userId}/sleep-logs/latest`
 
 Fetch the most recent sleep log for a user. (FR2)
@@ -71,4 +73,6 @@ at `0.0`, `averageBedTime`/`averageWakeTime` as `null`, and every `feelingFreque
 ## Errors
 
 Errors use a consistent shape — `{"error": "<message>"}` with a matching HTTP status — via a
-single `@ControllerAdvice`, not Spring Boot's default error body.
+single `@ControllerAdvice`, not Spring Boot's default error body. This covers validation
+failures and malformed requests (`400`), an unsupported HTTP verb on a valid path (`405`), and
+routes that don't exist at all (`404`) — not just the endpoints' own domain errors.

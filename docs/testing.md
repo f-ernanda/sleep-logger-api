@@ -12,7 +12,8 @@
 - **Business/service logic** (e.g. average calculation, total-time-in-bed derivation): plain
   JUnit 5 + AssertJ, no Spring context — these are pure functions over data, so they don't need
   Spring at all. `SleepAverageCalculatorTest` is the first of these, including the midnight-
-  crossing bed/wake time averaging case.
+  crossing bed/wake time averaging case. `NewSleepLogTest` covers the `timeInBedEnd`-after-
+  `timeInBedStart` invariant.
 - **Repository layer**: Testcontainers, not mocks — tests run the real queries against an
   ephemeral Postgres container, since the repository's whole job is translating to/from SQL
   correctly (see `decisions.md`). `SleepLogRepositoryTest` is the first of these.
