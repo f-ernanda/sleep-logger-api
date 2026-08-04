@@ -50,8 +50,11 @@ check_status "GET latest before any log" 404 "$status"
 status=$(curl -sS -o "$TMP_DIR/averages_empty.json" -w "%{http_code}" \
   "$BASE_URL/users/$USER_ID/sleep-logs/averages")
 check_status "GET averages before any log" 200 "$status"
-check_value "averages with no logs has zero average minutes" "0" \
-  "$(jq -r '.averageTotalTimeInBedMinutes' "$TMP_DIR/averages_empty.json")"
+# Numeric comparison via jq, not a string comparison of its raw output: jq's number formatting
+# for floats (0 vs 0.0) differs between jq 1.6 and 1.7+, which would otherwise make this flaky
+# depending on which jq happens to be installed.
+check_value "averages with no logs has zero average minutes" "true" \
+  "$(jq -r '.averageTotalTimeInBedMinutes == 0' "$TMP_DIR/averages_empty.json")"
 
 # FR1: create a log -> 201, total time in bed computed server-side
 status=$(curl -sS -o "$TMP_DIR/create.json" -w "%{http_code}" -X POST \
@@ -74,8 +77,8 @@ check_value "latest matches the created log" "$created_id" \
 status=$(curl -sS -o "$TMP_DIR/averages.json" -w "%{http_code}" \
   "$BASE_URL/users/$USER_ID/sleep-logs/averages")
 check_status "GET averages after creating" 200 "$status"
-check_value "averages reflect the one log" "465" \
-  "$(jq -r '.averageTotalTimeInBedMinutes' "$TMP_DIR/averages.json")"
+check_value "averages reflect the one log" "true" \
+  "$(jq -r '.averageTotalTimeInBedMinutes == 465' "$TMP_DIR/averages.json")"
 
 # Error cases: consistent {"error": "..."} shape
 status=$(curl -sS -o "$TMP_DIR/bad_feeling.json" -w "%{http_code}" -X POST \
