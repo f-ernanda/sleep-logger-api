@@ -1,6 +1,6 @@
 # Requirements
 
-Distilled from the assignment brief in [README.md](../README.md) into a checkable spec. This file
+Distilled from the assignment brief in [assignment.md](assignment.md) into a checkable spec. This file
 is the source of truth for "done" — `docs/api.md` and `docs/data-model.md` are the concrete
 translations of it, and `/spec-check` compares the implementation against it.
 

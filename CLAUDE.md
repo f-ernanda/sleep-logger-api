@@ -1,7 +1,8 @@
 # Sleep Logger API
 
 Take-home backend interview assignment: a REST API for logging sleep (Kotlin + Spring Boot +
-PostgreSQL + Flyway), no auth but user-aware. Full assignment brief: [README.md](README.md).
+PostgreSQL + Flyway), no auth but user-aware. Full assignment brief:
+[docs/assignment.md](docs/assignment.md).
 
 ## Stack
 
@@ -48,7 +49,7 @@ Use `/spec-check` to check the current implementation against the docs above.
 - Migrations: `Vx.y__description.sql` under `sleep/src/main/resources/db/migration`, continuing
   from the existing `V1.0__test_db_reachable.sql`
 - Trunk-based: commit directly to `main` in small, atomic, conventional commits — no feature
-  branches or PRs (deviates from the assignment's README; see `docs/decisions.md`). Each commit
+  branches or PRs (deviates from the assignment brief; see `docs/decisions.md`). Each commit
   should leave `main` buildable and passing tests, since there's no PR gate to catch it after
   the fact.
 - A `pre-commit` hook (`.githooks/pre-commit`) enforces that: it builds `sleep_api` and runs its

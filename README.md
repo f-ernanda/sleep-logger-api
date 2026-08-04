@@ -1,49 +1,115 @@
-# Backend Engineering Interview: Take-home Assignment
+<h1 align="center">Sleep Logger API</h1>
+<p align="center">A REST API for logging sleep data and viewing sleep averages.</p>
 
-Hello!
+<p align="center">
+  <!-- build -->
+  <img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/f-ernanda/sleep-logger-api/ci.yml">
+  <!-- languages -->
+  <img alt="GitHub language count" src="https://img.shields.io/github/languages/count/f-ernanda/sleep-logger-api?color=CB504C">
+  <!-- top language-->
+  <img alt="Top language" src="https://img.shields.io/github/languages/top/f-ernanda/sleep-logger-api?color=cb744c">
+</p>
 
-This is the repository that contains everything you need to complete the take home assignment, part of the backend interview process for Noom.
+<p align="center">
+  <a href="#-about-the-project">About the project</a> •
+  <a href="#-features">Features</a> •
+  <a href="#️-technologies">Technologies</a> •
+  <a href="#-how-to-run">How to run</a> •
+  <a href="#-testing">Testing</a> •
+  <a href="#-api">API</a> •
+  <a href="#-documentation">Documentation</a>
+</p>
 
-## The Assignment
+## 💻 About the project
 
-You need to develop an API for sleep logger that will later be integrated into the Noom web interface. The functional requirements API needs to support are:
+Sleep Logger is a REST API that records sleep data and generates statistics based on the user's sleep history. The API supports recording sleep logs, retrieving the most recent entry, and calculating averages over the previous 30 days.
 
- 1. Create the sleep log for the last night
-    1. Sleep data contains
-        1. The date of the sleep (today)
-        1. The time in bed interval
-        1. Total time in bed
-        1. How the user felt in the morning: one of [BAD, OK, GOOD]
+The project was originally developed as a backend take-home assignment for [Noom](https://www.noom.com/). The original assignment brief is preserved in [docs/assignment.md](./docs/assignment.md).
 
- 1. Fetch information about the last night's sleep
- 1. Get the last 30-day averages
-    1. Data that needs to be included in the response
-        1. The range for which averages are shown
-        1. Average total time in bed
-        1. The average time the user gets to bed and gets out of bed
-        1. Frequencies of how the user felt in the morning
-    1. The user can switch back to the single sleep log view (goes to requirement #1)
+## ✨ Features
 
-The assignment is to:
+- Log sleep data and morning feeling
+- Retrieve the most recent sleep log
+- Calculate 30-day sleep averages
 
- 1. Create tables required to support the functionality above (PostgreSQL)
-    1. The Spring project includes Flyway, which you should use to manage your DB migrations.
- 1. Build required functionality in the REST API service (Kotlin/Java + Spring)
-    1. Ignore authentication and authorization, but make the REST API aware of the concept of a user.
- 1. Write unit tests for the repository and any business logic.
- 1. Write a simple script or create Postman collection that can be used to test the API
+## 🛠️ Technologies
 
-## Instructions
+- Kotlin
+- Spring Boot
+- PostgreSQL
+- Docker
 
- 1. Create a git repository from the files provided here.
- 1. All code changes should be merged in as PRs to the repository. Separate your commits into meaningful pieces, and don't commit artifacts like build files etc.
- 1. Write code and PR descriptions as if you were writing production-level code.
- 1. The template in this repository provides a basic environment. Everything needed to start and test your code is available and functional. We expect you to use PostgreSQL and Java/Kotlin + Spring. On top of that, if you want to add new frameworks, you are free to do so.
- 1. Keep in mind the goal of the interview is to assess your software development and coding skills. There's no need to spend time tweaking the configuration of the server, the DB, or the build system. The defaults in use here are good enough for this exercise.
- 1. Once complete, zip the repository and upload it to the take-home link provided to you by Noom's talent team.
+## 🚀 How to run
 
-## How to Run
+### Prerequisites
 
-Dockerfiles are set up for your convenience for running the whole project. You will need docker and ports 5432 (Postgres) and 8080 (API).
+Before running the project, make sure you have:
 
-To run everything, simply execute `docker-compose up`. To build and run, execute `docker-compose up --build`.
+- Docker
+- Docker Compose
+
+No local JDK, Gradle, or PostgreSQL installation is required.
+
+### Installation
+
+Clone the repository:
+
+```bash
+git clone git@github.com:f-ernanda/sleep-logger-api.git
+cd sleep-logger-api
+```
+
+### Running
+
+Start the services with:
+
+```bash
+docker compose up --build
+```
+
+The API will be available at `http://localhost:8080` and PostgreSQL at `localhost:5432`.
+
+To stop the services:
+
+```bash
+docker compose down
+```
+
+## 🧪 Testing
+
+Run the automated tests with:
+
+```bash
+docker compose run --rm -T -v /var/run/docker.sock:/var/run/docker.sock sleep_api ./gradlew test
+```
+
+You can also run the end-to-end tests while the application is running:
+
+```bash
+./scripts/smoke-test.sh
+```
+
+See [docs/testing.md](docs/testing.md) for the full strategy.
+
+## 🧩 API
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| POST | `/users/{userId}/sleep-logs` | Log the previous night's sleep |
+| GET | `/users/{userId}/sleep-logs/latest` | Retrieve the most recent sleep log |
+| GET | `/users/{userId}/sleep-logs/averages` | Retrieve 30-day sleep averages |
+
+See the [API documentation](./docs/api.md) for details about request and response contracts.
+
+## 📚 Documentation
+
+- [Requirements](./docs/requirements.md) — functional and non-functional requirements
+- [Data model](./docs/data-model.md) — database structure
+- [API](./docs/api.md) — REST API contracts
+- [Testing](./docs/testing.md) — testing strategy
+- [Decisions](./docs/decisions.md) — relevant technical decisions
+- [Original assignment](./docs/assignment.md) — original technical assignment
+
+---
+
+🌱 Crafted by [Fernanda](https://github.com/f-ernanda)

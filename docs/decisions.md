@@ -36,16 +36,16 @@ worth revisiting.
 
 ## 2026-07-29 — Direct commits to main instead of a PR-based workflow
 
-**Context:** The assignment brief ([README.md](../README.md)) asks for changes to be "merged in
-as PRs to the repository." This project is also adopting trunk-based development to keep the
+**Context:** The assignment brief ([assignment.md](assignment.md)) asks for changes to be "merged
+in as PRs to the repository." This project is also adopting trunk-based development to keep the
 solo take-home workflow lightweight.
 
 **Decision:** Work directly on `main` with small, atomic, [conventional
 commits](https://www.conventionalcommits.org/) instead of opening a PR per change. No feature
 branches, no long-lived branches.
 
-**Consequences:** This deviates from the README's literal instruction — worth calling out to a
-reviewer rather than leaving it to look like an oversight. Since there's no PR description to
+**Consequences:** This deviates from the assignment brief's literal instruction — worth calling
+out to a reviewer rather than leaving it to look like an oversight. Since there's no PR description to
 carry rationale, commit messages have to do that job (see `CLAUDE.md` conventions). Since there's
 no PR review gate, each commit needs to leave `main` in a buildable, passing-tests state on its
 own — review happens before committing, not after.
@@ -278,3 +278,40 @@ verification use identical commands, so they can't silently drift apart. The wai
 polls `GET /users/0/sleep-logs/averages` (always `200`, even with no data) as a stand-in health
 check, since there's no dedicated health endpoint. No branch protection is configured — CI is a
 signal, not an enforced gate, consistent with the lightweight scope of this project.
+
+---
+
+## 2026-08-03 — README.md became a normal project README; the assignment brief moved to docs/assignment.md
+
+**Context:** The repo root `README.md` was still Noom's original assignment brief. With a remote
+now in place and the project functionally complete, a reviewer landing on the repo would benefit
+from a normal front door (what this is, how to run it, where things are) rather than the
+interview instructions.
+
+**Decision:** `README.md` is now a standard project README (features, quickstart, API summary,
+links to `docs/`). The original assignment brief moved to `docs/assignment.md`, unedited apart
+from a one-line provenance note at the top pointing back to this decision.
+
+**Consequences:** Every prior reference to "the assignment brief ([README.md](../README.md))" —
+in `CLAUDE.md`, `requirements.md`, and the direct-commits-to-main decision above — had to be
+repointed to `assignment.md`; grepped for stragglers after making the change rather than trusting
+memory of where they all were.
+
+---
+
+## 2026-08-03 — Fixed a jq-version-dependent flake in the smoke test
+
+**Context:** The first real CI run failed two checks that pass locally:
+`averageTotalTimeInBedMinutes` compared as the string `"0"`/`"465"` locally (`jq` 1.6, which
+normalizes `0.0` → `0` when reformatting a number for raw output) but as `"0.0"`/`"465.0"` on the
+GitHub Actions runner (`jq` 1.7+, which preserves the literal decimal form instead). The API's
+JSON response was correct and unchanged in both cases — the script's assertion was comparing
+`jq`'s reformatted string instead of the actual numeric value.
+
+**Decision:** Those two checks now use `jq`'s own numeric `==` (e.g.
+`.averageTotalTimeInBedMinutes == 0`, asserting the resulting `"true"`) instead of comparing
+`jq -r`'s raw string output against a hardcoded literal.
+
+**Consequences:** The comparison happens inside `jq` before any number-to-string formatting, so
+it's correct regardless of which `jq` version runs it. `totalTimeInBedMinutes` (a `Long`, not a
+`Double`) was never affected — plain integers don't have this ambiguity.
