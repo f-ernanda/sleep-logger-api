@@ -259,3 +259,22 @@ resource handler first.
 alone has no effect while the default static-resource mapping is still active, since that handler
 answers unmapped paths before `DispatcherServlet` ever gets a chance to throw. No functional loss
 from disabling static resource mapping, since this is a pure JSON API with no static content.
+
+---
+
+## 2026-08-03 — Added CI now that a remote exists
+
+**Context:** GitHub Actions needs a GitHub-hosted repo to run against, which didn't exist until
+now. With no PR workflow (see the direct-commits-to-main decision), CI's only meaningful trigger
+is a push to `main`.
+
+**Decision:** `.github/workflows/ci.yml` triggers on push to `main` (plus manual dispatch) and
+runs the exact same commands documented in `CLAUDE.md`/`testing.md`: build the image, run the
+Gradle test suite with the Docker socket mounted, start the full stack, wait for it to be ready,
+then run `scripts/smoke-test.sh` against it.
+
+**Consequences:** No separate CI-only script or command path to maintain — local and CI
+verification use identical commands, so they can't silently drift apart. The wait-for-ready loop
+polls `GET /users/0/sleep-logs/averages` (always `200`, even with no data) as a stand-in health
+check, since there's no dedicated health endpoint. No branch protection is configured — CI is a
+signal, not an enforced gate, consistent with the lightweight scope of this project.

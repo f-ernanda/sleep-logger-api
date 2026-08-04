@@ -42,3 +42,11 @@ docker compose up -d
 ```
 
 It uses a timestamp-derived `userId` so reruns don't collide with data from a previous run.
+
+## CI
+
+`.github/workflows/ci.yml` runs on every push to `main` (plus manual dispatch): builds the image,
+runs the Gradle test suite (socket-mounted, same as above), starts the full stack, waits for it to
+be ready, then runs `scripts/smoke-test.sh` against it. Deliberately reuses the exact commands
+documented on this page rather than a CI-specific path, so local and CI verification can't drift
+apart.

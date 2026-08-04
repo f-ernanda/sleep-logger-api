@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-and-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker compose build sleep_api
+
+      # Testcontainers needs Docker socket access, unavailable during `docker compose build`
+      # (that's why the Dockerfile builds with `-x test`) — run tests as a separate step instead.
+      - name: Run tests
+        run: docker compose run --rm -T -v /var/run/docker.sock:/var/run/docker.sock sleep_api ./gradlew test
+
+      - name: Start stack
+        run: docker compose up -d
+
+      - name: Wait for API to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/users/0/sleep-logs/averages > /dev/null; then
+              echo "API is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not become ready in time" >&2
+          docker compose logs
+          exit 1
+
+      - name: Run smoke test
+        run: ./scripts/smoke-test.sh
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

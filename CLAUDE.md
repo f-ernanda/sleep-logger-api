@@ -25,6 +25,8 @@ PostgreSQL + Flyway), no auth but user-aware. Full assignment brief: [README.md]
 - Live-reload (`bootRun --continuous` + devtools) was evaluated and dropped — not worth the
   complexity for this project's size. Rebuild-on-change (`docker compose up --build`) is the
   workflow.
+- CI (`.github/workflows/ci.yml`) runs on every push to `main`: build, test, start the stack, then
+  `scripts/smoke-test.sh` — the exact same commands documented here, not a separate CI-only path.
 
 ## Docs — spec-driven workflow
 
