@@ -10,6 +10,8 @@ fi
 
 BASE_URL="${BASE_URL:-http://localhost:8080}"
 USER_ID="$(date +%s)"
+LOG_DATE="$(date -u +%F)"
+START_DATE="$(date -u -d "$LOG_DATE - 1 day" +%F)"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
@@ -60,7 +62,7 @@ check_value "averages with no logs has zero average minutes" "true" \
 status=$(curl -sS -o "$TMP_DIR/create.json" -w "%{http_code}" -X POST \
   "$BASE_URL/users/$USER_ID/sleep-logs" \
   -H "Content-Type: application/json" \
-  -d '{"logDate":"2026-07-28","timeInBedStart":"2026-07-27T23:15:00Z","timeInBedEnd":"2026-07-28T07:00:00Z","feeling":"GOOD"}')
+  -d "{\"logDate\":\"$LOG_DATE\",\"timeInBedStart\":\"${START_DATE}T23:15:00Z\",\"timeInBedEnd\":\"${LOG_DATE}T07:00:00Z\",\"feeling\":\"GOOD\"}")
 check_status "POST creates a sleep log" 201 "$status"
 created_id=$(jq -r '.id' "$TMP_DIR/create.json")
 check_value "created log has computed totalTimeInBedMinutes" "465" \
@@ -84,7 +86,7 @@ check_value "averages reflect the one log" "true" \
 status=$(curl -sS -o "$TMP_DIR/bad_feeling.json" -w "%{http_code}" -X POST \
   "$BASE_URL/users/$USER_ID/sleep-logs" \
   -H "Content-Type: application/json" \
-  -d '{"logDate":"2026-07-28","timeInBedStart":"2026-07-27T23:15:00Z","timeInBedEnd":"2026-07-28T07:00:00Z","feeling":"GREAT"}')
+  -d "{\"logDate\":\"$LOG_DATE\",\"timeInBedStart\":\"${START_DATE}T23:15:00Z\",\"timeInBedEnd\":\"${LOG_DATE}T07:00:00Z\",\"feeling\":\"GREAT\"}")
 check_status "POST with invalid feeling" 400 "$status"
 check_value "error response has the documented shape" "true" \
   "$(jq 'has("error")' "$TMP_DIR/bad_feeling.json")"

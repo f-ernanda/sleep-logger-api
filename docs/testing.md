@@ -41,7 +41,8 @@ docker compose up -d
 ./scripts/smoke-test.sh
 ```
 
-It uses a timestamp-derived `userId` so reruns don't collide with data from a previous run.
+It uses a timestamp-derived `userId` so reruns don't collide with data from a previous run, and
+the current UTC date for the sleep log so it remains inside the averages' 30-day window.
 
 ## CI
 
